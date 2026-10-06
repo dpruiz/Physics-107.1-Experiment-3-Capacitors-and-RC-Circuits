@@ -13,7 +13,7 @@ import plotly.express as px
 from scipy.optimize import curve_fit
 
 # Data dumps
-arr1 = np.array([0.9, 1.1, 1.3, 1.6, 1.8, 1.9, 2.2, 2.4, 2.6, 2.8, 2.9, 3.1, 3.3, 3.5, 3.6, 3.8, 3.9, 4.1])
+arr1 = np.array([0.9 ,1.1 ,1.3 ,1.5 ,1.8 ,1.9 ,2.1 ,2.4 ,2.5,2.8 ,2.9 ,3.1 ,3.3 ,3.5 ,3.6 ,3.8 ,3.9 ,4.1])
 arr2 = np.array([4 ,4 ,4.1 ,4.2 ,4.2 ,4.2 ,4.3 ,4.3 ,4.4,4.4 ,4.5 ,4.5 ,4.6 ,4.6 ,4.7 ,4.7 ,4.8 ,4.8])
 arr3 = np.array([11.7, 11.4, 11.2, 10.9, 10.7, 10.5, 10.3, 10.1, 9.9, 9.7, 9.5, 9.3, 9.1, 8.9, 8.7, 8.6, 8.4, 8.2])
 arr4 = np.array([11.9, 11.9, 11.9, 11.8, 11.8, 11.8, 11.8, 11.8, 11.8, 11.7, 11.7, 11.7, 11.7, 11.7, 11.7, 11.7, 11.6, 11.6])
@@ -24,8 +24,8 @@ R1_measured = 220 * 1000
 R2_nominal = 660 * 1000
 R2_measured = 689 * 1000
 R_tolerance = 0.1
-C_nominal = 1000 * 10**(-6)
-C_measured = 1070 * 10**(-6)
+C_nominal = 1.00 * 10**(-3)
+C_measured = 1.07 * 10**(-3)
 C_tolerance = 0.2
 V_supply = 12.0
 
@@ -49,7 +49,7 @@ def discharging(arr, resistance, resistance_measured, resistor_tolerance, capaci
 
     # np.where has a conditional on the first arg. If the the conditial is true, the second arg is returned, if not, the third arg is returned.
     factor = np.where(data1["Voltage"] < 4, 0.001, 0.01)
-    factor2 = np.where(resistance_measured < 400, 0.01, 0.1)
+    factor2 = np.where(resistance_measured < 400000, 100, 1000)
     # create relative uncertainty column using multimeter uncertainty
     data1["Voltage_RU"] = (data1["Voltage"] * 0.005 + 4 * factor) / data1["Voltage"]
     V_ru = data1["Voltage_RU"]
@@ -92,7 +92,7 @@ def discharging(arr, resistance, resistance_measured, resistor_tolerance, capaci
     abs_uncertainty_theory = RC_theory * rel_uncertainty_theory
     # Uncertainty of measured components
     rel_uncertainty_resistor = (resistance_measured * 0.008 + 4 * factor2) / resistance_measured
-    rel_uncertainty_capacitor = (capacitance_measured * 0.008 + 4 * 0.1) / capacitance_measured
+    rel_uncertainty_capacitor = (capacitance_measured * 0.05 + 10 * 1e-6) / capacitance_measured
     rel_uncertainty_measured = np.sqrt(rel_uncertainty_resistor**2 + rel_uncertainty_capacitor**2)
     abs_uncertainty_measured = RC_measured * rel_uncertainty_measured
 
@@ -128,7 +128,7 @@ def discharging(arr, resistance, resistance_measured, resistor_tolerance, capaci
     scatter.add_trace(lineity.data[0])
     scatter.update_layout(
         title=dict(
-            text=f"Charging Graph Across {resistance} Ω Resistor",
+            text=f"Discharging Graph Across {resistance} Ω Resistor",
             font=dict(size=24),
             automargin=True
         ),
@@ -159,14 +159,11 @@ def discharging(arr, resistance, resistance_measured, resistor_tolerance, capaci
         ]
     )
 
-    # Combine scatter and line plots. Format graph
-    scatter.add_trace(lineity.data[0])
-    scatter.update_layout(title=f"Discharging Graph Across {resistance} Ω Resistor")
     scatter.show()
 
     # Show answers
     print(f"[Discharging] Line: y = {slope:.5f}x + {intercept:.5f}")
-    print(f"RC_exp: {RC_exp:.2f} s ± {abs_uncertainty_exp:.2f} s | RC_theory: {RC_theory:.2f} s | R^2: {r2_wls:.4f}\n")
+    print(f"RC_exp: {RC_exp:.2f} s ± {abs_uncertainty_exp:.2f} s | RC_theory: {RC_theory:.2f} s ± {abs_uncertainty_theory:.2f} s| RC_meaured: {RC_measured:.2f} s ± {abs_uncertainty_measured:.2f} s | R^2: {r2_wls:.4f}\n")
 
     #check whether experiment is accurate by determining if the greater value of the two minimums are lesser than the lesser value of the
     #two maximums.
@@ -178,7 +175,7 @@ def discharging(arr, resistance, resistance_measured, resistor_tolerance, capaci
     RC_exp_max = RC_exp + abs_uncertainty_exp
     RC_exp_min = RC_exp - abs_uncertainty_exp
 
-    print(f"By checking whether percent error of time constant and experimental relative uncertainty of time constant overlap:")
+    print(f"By checking whether theoretical time constant relative uncertainty and experimental relative uncertainty of time constant overlap:")
     if max(RC_theory_min, RC_exp_min) <= min(RC_theory_max, RC_exp_max):
       print("This experiment setup aligns with the theory.\n")
     else:
@@ -189,7 +186,7 @@ def discharging(arr, resistance, resistance_measured, resistor_tolerance, capaci
       print("This experiment setup aligns with the theory.\n")
     else:
       print("This experiment setup does not align with the theory.\n")
-    return data1
+    return data1, rel_uncertainty_resistor, rel_uncertainty_capacitor
 
 # ----------------------------------------------------
 # CHARGING FUNCTION
@@ -207,7 +204,7 @@ def charging(arr, resistance, resistance_measured, resistor_tolerance, capacitan
 
     # np.where has a conditional on the first arg. If the the conditial is true, the second arg is returned, if not, the third arg is returned.
     factor = np.where(data1["Voltage"] < 4, 0.001, 0.01)
-    factor2 = np.where(resistance_measured < 400, 0.01, 0.1)
+    factor2 = np.where(resistance_measured < 400000, 100, 1000)
     # create relative uncertainty column using multimeter uncertainty
     data1["Voltage_RU"] = (data1["Voltage"] * 0.005 + 4 * factor) / data1["Voltage"]
     V_ru = data1["Voltage_RU"]
@@ -246,7 +243,7 @@ def charging(arr, resistance, resistance_measured, resistor_tolerance, capacitan
     abs_uncertainty_theory = RC_theory * rel_uncertainty_theory
     # Uncertainty of measured components
     rel_uncertainty_resistor = (resistance_measured * 0.008 + 4 * factor2) / resistance_measured
-    rel_uncertainty_capacitor = (capacitance_measured * 0.008 + 4 * 0.1) / capacitance_measured
+    rel_uncertainty_capacitor = (capacitance_measured * 0.05 + 10 * 1e-6) / capacitance_measured
     rel_uncertainty_measured = np.sqrt(rel_uncertainty_resistor**2 + rel_uncertainty_capacitor**2)
     abs_uncertainty_measured = RC_measured * rel_uncertainty_measured
 
@@ -314,10 +311,11 @@ def charging(arr, resistance, resistance_measured, resistor_tolerance, capacitan
             )
         ]
     )
+
     scatter.show()
 
     print(f"[Charging] Line: y = {slope:.5f}x + {intercept:.5f}")
-    print(f"RC_exp: {RC_exp:.2f} s ± {abs_uncertainty_exp:.2f} s | RC_theory: {RC_theory:.2f} s | R^2: {r2_wls:.4f}\n")
+    print(f"RC_exp: {RC_exp:.2f} s ± {abs_uncertainty_exp:.2f} s | RC_theory: {RC_theory:.2f} s ± {abs_uncertainty_theory:.2f} s| RC_meaured: {RC_measured:.2f} s ± {abs_uncertainty_measured:.2f} s | R^2: {r2_wls:.4f}\n")
 
    #check whether experiment is accurate by determining if the greater value of the two minimums are lesser than the lesser value of the
     #two maximums.
@@ -329,7 +327,7 @@ def charging(arr, resistance, resistance_measured, resistor_tolerance, capacitan
     RC_exp_max = RC_exp + abs_uncertainty_exp
     RC_exp_min = RC_exp - abs_uncertainty_exp
 
-    print(f"By checking whether percent error of time constant and experimental relative uncertainty of time constant overlap:")
+    print(f"By checking whether theoretical time constant relative uncertainty and experimental relative uncertainty of time constant overlap:")
     if max(RC_theory_min, RC_exp_min) <= min(RC_theory_max, RC_exp_max):
       print("This experiment setup aligns with the theory.\n")
     else:
@@ -340,7 +338,7 @@ def charging(arr, resistance, resistance_measured, resistor_tolerance, capacitan
       print("This experiment setup aligns with the theory.\n")
     else:
       print("This experiment setup does not align with the theory.\n")
-    return data1
+    return data1, rel_uncertainty_resistor, rel_uncertainty_capacitor
 
 """Function Calls"""
 

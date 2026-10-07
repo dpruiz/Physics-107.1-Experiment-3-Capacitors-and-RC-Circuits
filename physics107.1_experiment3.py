@@ -186,7 +186,7 @@ def discharging(arr, resistance, resistance_measured, resistor_tolerance, capaci
       print("This experiment setup aligns with the theory.\n")
     else:
       print("This experiment setup does not align with the theory.\n")
-    return data1, rel_uncertainty_resistor, rel_uncertainty_capacitor
+    return data1
 
 # ----------------------------------------------------
 # CHARGING FUNCTION
@@ -338,7 +338,7 @@ def charging(arr, resistance, resistance_measured, resistor_tolerance, capacitan
       print("This experiment setup aligns with the theory.\n")
     else:
       print("This experiment setup does not align with the theory.\n")
-    return data1, rel_uncertainty_resistor, rel_uncertainty_capacitor
+    return data1
 
 """Function Calls"""
 

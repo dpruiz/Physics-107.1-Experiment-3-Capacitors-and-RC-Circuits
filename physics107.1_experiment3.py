@@ -21,9 +21,9 @@ arr4 = np.array([11.9, 11.9, 11.9, 11.8, 11.8, 11.8, 11.8, 11.8, 11.8, 11.7, 11.
 # Other circuit info
 R1_nominal = 220 * 1000
 R1_measured = 220 * 1000
-R2_nominal = 660 * 1000
+R2_nominal = 680 * 1000
 R2_measured = 689 * 1000
-R_tolerance = 0.1
+R_tolerance = 0.05
 C_nominal = 1.00 * 10**(-3)
 C_measured = 1.07 * 10**(-3)
 C_tolerance = 0.2
@@ -158,7 +158,7 @@ def discharging(arr, resistance, resistance_measured, resistor_tolerance, capaci
             )
         ]
     )
-
+    scatter.tight_layout()
     scatter.show()
 
     # Show answers
